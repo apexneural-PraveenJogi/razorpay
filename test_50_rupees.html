@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Razorpay Payment - 50 Rupees Test</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .order-info {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .order-info p {
+            margin: 5px 0;
+        }
+        button {
+            background-color: #3399cc;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #2a7ba0;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💳 Razorpay Payment Test</h1>
+        <div class="order-info">
+            <p><strong>Amount:</strong> ₹50.00</p>
+            <p><strong>Order ID:</strong> <span id="orderId">Loading...</span></p>
+            <p><strong>Status:</strong> <span id="orderStatus">Creating order...</span></p>
+        </div>
+        
+        <button id="payButton" onclick="initiatePayment()" disabled>Pay ₹50.00</button>
+        
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        let orderId = null;
+        const API_BASE = 'http://localhost:8000';
+        const RAZORPAY_KEY_ID = 'rzp_test_S4Xbkbdtc5XRyZ';
+
+        // Create order on page load
+        window.onload = async function() {
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/orders`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        amount: 50.0,
+                        currency: 'INR',
+                        receipt: `order_50_rupees_${Date.now()}`,
+                        notes: {
+                            description: 'Test payment of 50 rupees',
+                            test: true
+                        }
+                    })
+                });
+
+                const order = await response.json();
+                orderId = order.id;
+                
+                document.getElementById('orderId').textContent = orderId;
+                document.getElementById('orderStatus').textContent = 'Order created - Ready to pay';
+                document.getElementById('payButton').disabled = false;
+            } catch (error) {
+                document.getElementById('orderStatus').textContent = 'Error creating order: ' + error.message;
+                showStatus('Error creating order. Please refresh the page.', 'error');
+            }
+        };
+
+        function initiatePayment() {
+            if (!orderId) {
+                showStatus('Order ID not available. Please refresh the page.', 'error');
+                return;
+            }
+
+            const options = {
+                "key": RAZORPAY_KEY_ID,
+                "amount": 5000, // 50 rupees in paise
+                "currency": "INR",
+                "name": "Razorpay FastAPI Test",
+                "description": "Test Payment of 50 Rupees",
+                "order_id": orderId,
+                "handler": function (response) {
+                    // Payment successful - verify on backend
+                    verifyPayment(response);
+                },
+                "prefill": {
+                    "name": "Test User",
+                    "email": "test@example.com",
+                    "contact": "9999999999"
+                },
+                "theme": {
+                    "color": "#3399cc"
+                },
+                "modal": {
+                    "ondismiss": function() {
+                        showStatus('Payment cancelled by user.', 'error');
+                    }
+                }
+            };
+
+            const rzp = new Razorpay(options);
+            
+            rzp.on('payment.failed', function (response) {
+                showStatus('Payment failed: ' + response.error.description, 'error');
+            });
+
+            rzp.open();
+        }
+
+        async function verifyPayment(response) {
+            showStatus('Verifying payment...', 'loading');
+            
+            try {
+                const verifyResponse = await fetch(`${API_BASE}/api/v1/payments/verify`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        order_id: response.razorpay_order_id,
+                        payment_id: response.razorpay_payment_id,
+                        signature: response.razorpay_signature
+                    })
+                });
+
+                const result = await verifyResponse.json();
+                
+                if (result.verified) {
+                    showStatus(
+                        '✅ Payment verified and captured successfully!<br>' +
+                        'Payment ID: ' + result.payment_id + '<br>' +
+                        'Order ID: ' + result.order_id + '<br>' +
+                        'The payment should now appear in your Razorpay dashboard.',
+                        'success'
+                    );
+                } else {
+                    showStatus('❌ Payment verification failed: ' + result.message, 'error');
+                }
+            } catch (error) {
+                showStatus('Error verifying payment: ' + error.message, 'error');
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = message;
+            statusDiv.className = 'status ' + type;
+            statusDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

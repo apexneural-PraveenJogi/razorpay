@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Razorpay Subscription Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            background: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px 10px 0 0;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background: #3399cc;
+            color: white;
+        }
+        
+        .tab:hover {
+            background: #2a7ba0;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 0 15px 15px 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3399cc;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #3399cc 0%, #2a7ba0 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(51, 153, 204, 0.3);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(51, 153, 204, 0.4);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .alert.show {
+            display: block;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+        
+        .list-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #3399cc;
+        }
+        
+        .list-item h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .list-item p {
+            color: #666;
+            margin: 5px 0;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .badge-active {
+            background: #28a745;
+            color: white;
+        }
+        
+        .badge-paused {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .badge-cancelled {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .badge-created {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .actions button {
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                border-radius: 10px;
+                margin-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💳 Razorpay Subscription Management</h1>
+            <p>Manage plans, subscriptions, and invoices</p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('plans')">Plans</button>
+            <button class="tab" onclick="showTab('create-plan')">Create Plan</button>
+            <button class="tab" onclick="showTab('subscriptions')">Subscriptions</button>
+            <button class="tab" onclick="showTab('create-subscription')">Create Subscription</button>
+            <button class="tab" onclick="showTab('invoices')">Invoices</button>
+        </div>
+        
+        <!-- Plans Tab -->
+        <div id="plans" class="tab-content active">
+            <h2>Available Plans</h2>
+            <div id="plans-alert"></div>
+            <button onclick="loadPlans()" style="margin-bottom: 20px;">Refresh Plans</button>
+            <div id="plans-list"></div>
+        </div>
+        
+        <!-- Create Plan Tab -->
+        <div id="create-plan" class="tab-content">
+            <h2>Create New Plan</h2>
+            <div id="create-plan-alert"></div>
+            <form onsubmit="createPlan(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Period *</label>
+                        <select id="plan-period" required>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly" selected>Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Interval *</label>
+                        <input type="number" id="plan-interval" value="1" min="1" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Plan Name *</label>
+                    <input type="text" id="plan-name" placeholder="e.g., Premium Plan" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Amount (₹) *</label>
+                        <input type="number" id="plan-amount" step="0.01" min="0.01" placeholder="500.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Currency</label>
+                        <select id="plan-currency">
+                            <option value="INR" selected>INR</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" id="plan-description" placeholder="Plan description">
+                </div>
+                <button type="submit">Create Plan</button>
+            </form>
+        </div>
+        
+        <!-- Subscriptions Tab -->
+        <div id="subscriptions" class="tab-content">
+            <h2>Active Subscriptions</h2>
+            <div id="subscriptions-alert"></div>
+            <button onclick="loadSubscriptions()" style="margin-bottom: 20px;">Refresh Subscriptions</button>
+            <div id="subscriptions-list"></div>
+        </div>
+        
+        <!-- Create Subscription Tab -->
+        <div id="create-subscription" class="tab-content">
+            <h2>Create New Subscription</h2>
+            <div id="create-subscription-alert"></div>
+            <form onsubmit="createSubscription(event)">
+                <div class="form-group">
+                    <label>Plan ID *</label>
+                    <input type="text" id="subscription-plan-id" placeholder="plan_abc123" required>
+                    <small style="color: #666;">Get Plan ID from Plans tab</small>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" id="subscription-quantity" value="1" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Total Count (Billing Cycles)</label>
+                        <input type="number" id="subscription-total-count" placeholder="12 (leave empty for infinite)">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Customer Notify</label>
+                    <select id="subscription-notify">
+                        <option value="1" selected>Yes</option>
+                        <option value="0">No</option>
+                    </select>
+                </div>
+                <button type="submit">Create Subscription</button>
+            </form>
+        </div>
+        
+        <!-- Invoices Tab -->
+        <div id="invoices" class="tab-content">
+            <h2>Subscription Invoices</h2>
+            <div id="invoices-alert"></div>
+            <div class="form-group">
+                <label>Subscription ID</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="invoice-subscription-id" placeholder="sub_xyz789" style="flex: 1;">
+                    <button onclick="loadInvoices()">Load Invoices</button>
+                </div>
+            </div>
+            <div id="invoices-list"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Load data when switching to certain tabs
+            if (tabName === 'plans') {
+                loadPlans();
+            } else if (tabName === 'subscriptions') {
+                loadSubscriptions();
+            }
+        }
+        
+        function showAlert(containerId, message, type = 'info') {
+            const alertDiv = document.getElementById(containerId);
+            alertDiv.className = `alert alert-${type} show`;
+            alertDiv.textContent = message;
+            setTimeout(() => {
+                alertDiv.classList.remove('show');
+            }, 5000);
+        }
+        
+        async function loadPlans() {
+            const listDiv = document.getElementById('plans-list');
+            listDiv.innerHTML = '<div class="loading">Loading plans...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/subscriptions/plans?count=50`);
+                const data = await response.json();
+                
+                if (data.items && data.items.length > 0) {
+                    listDiv.innerHTML = data.items.map(plan => `
+                        <div class="list-item">
+                            <h3>${plan.item.name || 'Unnamed Plan'} <span class="badge badge-active">${plan.period}</span></h3>
+                            <p><strong>Plan ID:</strong> ${plan.id}</p>
+                            <p><strong>Amount:</strong> ₹${(plan.item.amount / 100).toFixed(2)} ${plan.item.currency}</p>
+                            <p><strong>Interval:</strong> Every ${plan.interval} ${plan.period}(s)</p>
+                            ${plan.item.description ? `<p><strong>Description:</strong> ${plan.item.description}</p>` : ''}
+                        </div>
+                    `).join('');
+                } else {
+                    listDiv.innerHTML = '<div class="empty-state">No plans found. Create one to get started!</div>';
+                }
+            } catch (error) {
+                listDiv.innerHTML = '<div class="empty-state">Error loading plans: ' + error.message + '</div>';
+            }
+        }
+        
+        async function createPlan(event) {
+            event.preventDefault();
+            
+            const planData = {
+                period: document.getElementById('plan-period').value,
+                interval: parseInt(document.getElementById('plan-interval').value),
+                item: {
+                    name: document.getElementById('plan-name').value,
+                    amount: parseFloat(document.getElementById('plan-amount').value),
+                    currency: document.getElementById('plan-currency').value,
+                    description: document.getElementById('plan-description').value || undefined
+                }
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/subscriptions/plans`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(planData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showAlert('create-plan-alert', `Plan created successfully! Plan ID: ${result.id}`, 'success');
+                    event.target.reset();
+                    loadPlans();
+                    setTimeout(() => showTab('plans'), 2000);
+                } else {
+                    showAlert('create-plan-alert', `Error: ${result.detail || result.error || 'Failed to create plan'}`, 'error');
+                }
+            } catch (error) {
+                showAlert('create-plan-alert', 'Error: ' + error.message, 'error');
+            }
+        }
+        
+        async function loadSubscriptions() {
+            const listDiv = document.getElementById('subscriptions-list');
+            listDiv.innerHTML = '<div class="loading">Loading subscriptions...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/subscriptions?count=50`);
+                const data = await response.json();
+                
+                if (data.items && data.items.length > 0) {
+                    listDiv.innerHTML = data.items.map(sub => {
+                        const statusClass = sub.status === 'active' ? 'badge-active' : 
+                                          sub.status === 'paused' ? 'badge-paused' :
+                                          sub.status === 'cancelled' ? 'badge-cancelled' : 'badge-created';
+                        return `
+                            <div class="list-item">
+                                <h3>Subscription ${sub.id.substring(0, 12)}... <span class="badge ${statusClass}">${sub.status}</span></h3>
+                                <p><strong>Plan ID:</strong> ${sub.plan_id}</p>
+                                <p><strong>Status:</strong> ${sub.status}</p>
+                                <p><strong>Quantity:</strong> ${sub.quantity}</p>
+                                <p><strong>Paid Count:</strong> ${sub.paid_count} / ${sub.total_count || '∞'}</p>
+                                ${sub.customer_id ? `<p><strong>Customer ID:</strong> ${sub.customer_id}</p>` : ''}
+                                <div class="actions">
+                                    ${sub.status === 'active' ? `
+                                        <button class="btn-warning" onclick="pauseSubscription('${sub.id}')">Pause</button>
+                                        <button class="btn-danger" onclick="cancelSubscription('${sub.id}')">Cancel</button>
+                                    ` : ''}
+                                    ${sub.status === 'paused' ? `
+                                        <button class="btn-success" onclick="resumeSubscription('${sub.id}')">Resume</button>
+                                        <button class="btn-danger" onclick="cancelSubscription('${sub.id}')">Cancel</button>
+                                    ` : ''}
+                                    <button onclick="loadSubscriptionInvoices('${sub.id}')">View Invoices</button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    listDiv.innerHTML = '<div class="empty-state">No subscriptions found. Create one to get started!</div>';
+                }
+            } catch (error) {
+                listDiv.innerHTML = '<div class="empty-state">Error loading subscriptions: ' + error.message + '</div>';
+            }
+        }
+        
+        async function createSubscription(event) {
+            event.preventDefault();
+            
+            const subscriptionData = {
+                plan_id: document.getElementById('subscription-plan-id').value,
+                quantity: parseInt(document.getElementById('subscription-quantity').value) || 1,
+                customer_notify: parseInt(document.getElementById('subscription-notify').value),
+                total_count: document.getElementById('subscription-total-count').value ? 
+                            parseInt(document.getElementById('subscription-total-count').value) : undefined
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/subscriptions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(subscriptionData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showAlert('create-subscription-alert', 
+                        `Subscription created successfully! ID: ${result.id}. Status: ${result.status}. Customer needs to authenticate payment.`, 
+                        'success');
+                    event.target.reset();
+                    loadSubscriptions();
+                    setTimeout(() => showTab('subscriptions'), 2000);
+                } else {
+                    showAlert('create-subscription-alert', `Error: ${result.detail || result.error || 'Failed to create subscription'}`, 'error');
+                }
+            } catch (error) {
+                showAlert('create-subscription-alert', 'Error: ' + error.message, 'error');
+            }
+        }
+        
+        async function cancelSubscription(subscriptionId) {
+            if (!confirm('Are you sure you want to cancel this subscription?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/subscriptions/${subscriptionId}/cancel`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cancel_at_cycle_end: false })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showAlert('subscriptions-alert', 'Subscription cancelled successfully!', 'success');
+                    loadSubscriptions();
+                } else {
+                    showAlert('subscriptions-alert', `Error: ${result.detail || result.error}`, 'error');
+                }
+            } catch (error) {
+                showAlert('subscriptions-alert', 'Error: ' + error.message, 'error');
+            }
+        }
+        
+        async function pauseSubscription(subscriptionId) {
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/subscriptions/${subscriptionId}/pause`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pause_at: 'immediate' })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showAlert('subscriptions-alert', 'Subscription paused successfully!', 'success');
+                    loadSubscriptions();
+                } else {
+                    showAlert('subscriptions-alert', `Error: ${result.detail || result.error}`, 'error');
+                }
+            } catch (error) {
+                showAlert('subscriptions-alert', 'Error: ' + error.message, 'error');
+            }
+        }
+        
+        async function resumeSubscription(subscriptionId) {
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/subscriptions/${subscriptionId}/resume`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ resume_at: 'immediate' })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showAlert('subscriptions-alert', 'Subscription resumed successfully!', 'success');
+                    loadSubscriptions();
+                } else {
+                    showAlert('subscriptions-alert', `Error: ${result.detail || result.error}`, 'error');
+                }
+            } catch (error) {
+                showAlert('subscriptions-alert', 'Error: ' + error.message, 'error');
+            }
+        }
+        
+        async function loadInvoices() {
+            const subscriptionId = document.getElementById('invoice-subscription-id').value;
+            if (!subscriptionId) {
+                showAlert('invoices-alert', 'Please enter a subscription ID', 'error');
+                return;
+            }
+            
+            const listDiv = document.getElementById('invoices-list');
+            listDiv.innerHTML = '<div class="loading">Loading invoices...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/subscriptions/${subscriptionId}/invoices`);
+                const data = await response.json();
+                
+                if (data.items && data.items.length > 0) {
+                    listDiv.innerHTML = data.items.map(invoice => `
+                        <div class="list-item">
+                            <h3>Invoice ${invoice.id.substring(0, 12)}...</h3>
+                            <p><strong>Status:</strong> ${invoice.status}</p>
+                            <p><strong>Amount:</strong> ₹${(invoice.amount / 100).toFixed(2)} ${invoice.currency}</p>
+                            ${invoice.payment_id ? `<p><strong>Payment ID:</strong> ${invoice.payment_id}</p>` : ''}
+                            ${invoice.description ? `<p><strong>Description:</strong> ${invoice.description}</p>` : ''}
+                            <p><strong>Created:</strong> ${new Date(invoice.created_at * 1000).toLocaleString()}</p>
+                        </div>
+                    `).join('');
+                } else {
+                    listDiv.innerHTML = '<div class="empty-state">No invoices found for this subscription.</div>';
+                }
+            } catch (error) {
+                listDiv.innerHTML = '<div class="empty-state">Error loading invoices: ' + error.message + '</div>';
+            }
+        }
+        
+        async function loadSubscriptionInvoices(subscriptionId) {
+            document.getElementById('invoice-subscription-id').value = subscriptionId;
+            showTab('invoices');
+            await loadInvoices();
+        }
+        
+        // Load initial data
+        window.onload = function() {
+            loadPlans();
+        };
+    </script>
+</body>
+</html>
