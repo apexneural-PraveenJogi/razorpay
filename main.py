@@ -841,6 +841,54 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     )
 
 
+@app.get(
+    "/api/v1/webhooks/events",
+    tags=["Webhooks"],
+    summary="List Webhook Events",
+    description="Get all webhook events stored in the database."
+)
+async def list_webhook_events_endpoint(
+    db: AsyncSession = Depends(get_db),
+    skip: int = 0,
+    limit: int = 100,
+    event_type: Optional[str] = None
+):
+    """List all webhook events from the database."""
+    try:
+        from database import WebhookEvent
+        from sqlalchemy import select, desc
+        
+        query = select(WebhookEvent).order_by(desc(WebhookEvent.created_at))
+        
+        if event_type:
+            query = query.where(WebhookEvent.event == event_type)
+        
+        result = await db.execute(query.offset(skip).limit(limit))
+        events = result.scalars().all()
+        
+        return {
+            "total": len(events),
+            "events": [
+                {
+                    "id": event.id,
+                    "entity": event.entity,
+                    "event": event.event,
+                    "account_id": event.account_id,
+                    "signature_verified": event.signature_verified,
+                    "processed": event.processed,
+                    "created_at": event.created_at.isoformat() if event.created_at else None
+                }
+                for event in events
+            ]
+        }
+    except Exception as e:
+        logger.error(f"Error listing webhook events: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to list webhook events: {str(e)}"
+        )
+
+
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
     """General exception handler."""
