@@ -1,40 +1,65 @@
 """
 Razorpay client initialization and utilities.
 """
+from typing import Dict, Any, Optional
+
 import razorpay
-from typing import Dict, Any
+import requests
+from requests.auth import HTTPBasicAuth
+
 from config import settings
 
 
-# Initialize Razorpay client
+# Initialize Razorpay SDK client (used for utilities like signature verification,
+# fetching payments/orders, etc.)
 client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
 
-def create_order(amount: int, currency: str = "INR", receipt: str = None, notes: Dict[str, Any] = None) -> Dict[str, Any]:
+def create_order(
+    amount: int,
+    currency: str = "INR",
+    receipt: Optional[str] = None,
+    notes: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
     """
-    Create a Razorpay order.
-    
+    Create a Razorpay order (direct HTTP with explicit timeout).
+
+    We use `requests` directly here so that:
+    - Network / auth errors fail fast with clear messages
+    - We can control timeouts explicitly (no hanging requests)
+    - The rest of the codebase stays the same.
+
     Args:
         amount: Amount in paise (smallest currency unit)
         currency: Currency code (default: INR)
-        receipt: Receipt identifier
-        notes: Additional notes/metadata
-    
+        receipt: Optional receipt identifier
+        notes: Optional additional notes/metadata
+
     Returns:
-        Order response from Razorpay API
+        Parsed JSON order response from Razorpay API.
+
+    Raises:
+        requests.HTTPError or requests.RequestException on failure.
     """
-    order_data = {
-        "amount": amount,  # Amount in paise
+    order_data: Dict[str, Any] = {
+        "amount": amount,
         "currency": currency,
     }
-    
+
     if receipt:
         order_data["receipt"] = receipt
-    
+
     if notes:
         order_data["notes"] = notes
-    
-    return client.order.create(data=order_data)
+
+    response = requests.post(
+        "https://api.razorpay.com/v1/orders",
+        json=order_data,
+        auth=HTTPBasicAuth(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET),
+        timeout=10,  # seconds: (connect + read)
+    )
+    response.raise_for_status()
+    return response.json()
 
 
 def verify_payment_signature(order_id: str, payment_id: str, signature: str) -> bool:

@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pay ₹10 - Secure Payment</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        .order-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .info-label {
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .info-value {
+            color: #333;
+            font-weight: 600;
+            word-break: break-all;
+        }
+        
+        .amount {
+            font-size: 42px;
+            color: #667eea;
+            font-weight: 700;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .payment-methods {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .payment-methods-title {
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .payment-methods-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            font-size: 12px;
+        }
+        
+        .payment-tag {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        
+        .tag-card { background: #e3f2fd; color: #1976d2; }
+        .tag-upi { background: #e8f5e9; color: #388e3c; }
+        .tag-qr { background: #fff3e0; color: #f57c00; }
+        .tag-netbanking { background: #f3e5f5; color: #7b1fa2; }
+        .tag-wallet { background: #fce4ec; color: #c2185b; }
+        .tag-emi { background: #e0f2f1; color: #00796b; }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        input:invalid {
+            border-color: #f44336;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+        
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            display: none;
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .secure-badge {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .secure-badge::before {
+            content: "🔒 ";
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .amount {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Complete Payment</h1>
+        <p class="subtitle">Secure payment powered by Razorpay</p>
+        
+        <div class="order-info">
+            <div class="info-row">
+                <span class="info-label">Order ID:</span>
+                <span class="info-value" id="orderId">Creating...</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Amount:</span>
+                <span class="info-value">₹10.00</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Currency:</span>
+                <span class="info-value">INR</span>
+            </div>
+        </div>
+        
+        <div class="amount">₹10</div>
+        
+        <div class="payment-methods">
+            <div class="payment-methods-title">Available Payment Methods</div>
+            <div class="payment-methods-tags">
+                <span class="payment-tag tag-card">💳 Cards</span>
+                <span class="payment-tag tag-upi">📱 UPI</span>
+                <span class="payment-tag tag-qr">📲 QR Code</span>
+                <span class="payment-tag tag-netbanking">🏦 Net Banking</span>
+                <span class="payment-tag tag-wallet">💼 Wallets</span>
+                <span class="payment-tag tag-emi">📅 EMI</span>
+            </div>
+        </div>
+        
+        <form id="paymentForm">
+            <div class="form-group">
+                <label for="customerName">Your Name *</label>
+                <input type="text" id="customerName" placeholder="Enter your full name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="customerEmail">Email Address *</label>
+                <input type="email" id="customerEmail" placeholder="your.email@example.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="customerPhone">Phone Number *</label>
+                <input type="tel" id="customerPhone" placeholder="10-digit mobile number" pattern="[0-9]{10}" required>
+            </div>
+            
+            <button type="submit" class="btn" id="payBtn" disabled>
+                Creating order...
+            </button>
+        </form>
+        
+        <div class="status" id="status"></div>
+        
+        <div class="secure-badge">Your payment is secure and encrypted</div>
+    </div>
+
+    <script>
+        const RAZORPAY_KEY_ID = 'rzp_live_S9DOOBAeN20OAA';
+        const API_BASE_URL = 'http://localhost:8000';
+        
+        let currentOrderId = null;
+        
+        // Create order on page load (with timeout and clear error)
+        async function createOrder() {
+            const payBtn = document.getElementById('payBtn');
+            const orderIdSpan = document.getElementById('orderId');
+
+            // reset state
+            payBtn.disabled = true;
+            payBtn.textContent = 'Creating order...';
+            orderIdSpan.textContent = 'Creating...';
+            showStatus('', 'info');
+
+            try {
+                // Abort request if backend hangs (e.g. Razorpay not reachable)
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s
+
+                const response = await fetch(
+                    `${API_BASE_URL}/api/v1/orders`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            amount: 10.0,
+                            currency: 'INR',
+                            receipt: `receipt_10_${Date.now()}`,
+                            notes: { purpose: '10 rupees payment' }
+                        }),
+                        signal: controller.signal
+                    }
+                );
+
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                }
+                
+                const order = await response.json();
+                
+                if (!order.id) {
+                    throw new Error('Invalid order response: missing order ID');
+                }
+                
+                currentOrderId = order.id;
+                orderIdSpan.textContent = order.id;
+                payBtn.disabled = false;
+                payBtn.textContent = 'Pay ₹10';
+
+            } catch (error) {
+                const isTimeout = error.name === 'AbortError';
+                const msg = isTimeout
+                    ? 'Order creation is taking too long. Please check if the backend can reach Razorpay, then click Retry.'
+                    : `Failed to create order: ${error.message}.`;
+
+                showStatus(msg, 'error');
+                payBtn.disabled = true;
+                payBtn.textContent = 'Retry (Create Order)';
+                orderIdSpan.textContent = 'Error';
+            }
+        }
+        
+        // Function to open Razorpay checkout
+        function openRazorpayCheckout() {
+            if (!currentOrderId) {
+                showStatus('Order not created. Please refresh the page.', 'error');
+                return;
+            }
+            
+            const customerName = document.getElementById('customerName').value.trim();
+            const customerEmail = document.getElementById('customerEmail').value.trim();
+            const customerPhone = document.getElementById('customerPhone').value.trim();
+            
+            if (!customerName || !customerEmail || !customerPhone) {
+                showStatus('Please fill in all required fields.', 'error');
+                return;
+            }
+            
+            const payBtn = document.getElementById('payBtn');
+            payBtn.disabled = true;
+            payBtn.innerHTML = '<span class="loading"></span>Opening payment gateway...';
+            
+            const options = {
+                key: RAZORPAY_KEY_ID,
+                amount: 1000, // 10 rupees in paise
+                currency: 'INR',
+                name: 'Razorpay Payment',
+                description: 'Payment of ₹10',
+                order_id: currentOrderId,
+                prefill: {
+                    name: customerName,
+                    email: customerEmail,
+                    contact: customerPhone
+                },
+                theme: {
+                    color: '#667eea'
+                },
+                notes: {
+                    order_id: currentOrderId,
+                    customer_name: customerName,
+                    customer_email: customerEmail
+                },
+                handler: async function(response) {
+                    await verifyPayment(response);
+                },
+                modal: {
+                    ondismiss: function() {
+                        payBtn.disabled = false;
+                        payBtn.textContent = 'Pay ₹10';
+                        showStatus('Payment cancelled. You can try again.', 'info');
+                    }
+                }
+            };
+            
+            try {
+                if (typeof Razorpay === 'undefined') {
+                    throw new Error('Razorpay script not loaded. Please check your internet connection.');
+                }
+                
+                const rzp = new Razorpay(options);
+                
+                rzp.on('payment.failed', function(response) {
+                    showStatus(`Payment failed: ${response.error.description || response.error.reason || 'Unknown error'}. Please try again.`, 'error');
+                    payBtn.disabled = false;
+                    payBtn.textContent = 'Pay ₹10';
+                });
+                
+                rzp.open();
+                
+            } catch (error) {
+                showStatus(`Error: ${error.message}. Please try again or contact support.`, 'error');
+                payBtn.disabled = false;
+                payBtn.textContent = 'Pay ₹10';
+            }
+        }
+        
+        // Verify payment after successful checkout
+        async function verifyPayment(response) {
+            const payBtn = document.getElementById('payBtn');
+            payBtn.innerHTML = '<span class="loading"></span>Verifying payment...';
+            
+            try {
+                const verifyResponse = await fetch(`${API_BASE_URL}/api/v1/payments/verify`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        order_id: response.razorpay_order_id,
+                        payment_id: response.razorpay_payment_id,
+                        signature: response.razorpay_signature
+                    })
+                });
+                
+                if (!verifyResponse.ok) {
+                    const errorData = await verifyResponse.json().catch(() => ({ error: 'Unknown error' }));
+                    throw new Error(errorData.error || `HTTP ${verifyResponse.status}`);
+                }
+                
+                const result = await verifyResponse.json();
+                
+                if (result.verified) {
+                    showStatus('✅ Payment successful! Your payment has been verified and processed.', 'success');
+                    payBtn.textContent = 'Payment Complete';
+                    payBtn.disabled = true;
+                    document.getElementById('paymentForm').style.display = 'none';
+                } else {
+                    showStatus('⚠️ Payment received but verification failed. Please contact support with your payment ID.', 'error');
+                    payBtn.disabled = false;
+                    payBtn.textContent = 'Pay ₹10';
+                }
+            } catch (error) {
+                showStatus(`⚠️ Payment received but verification failed: ${error.message}. Please contact support.`, 'error');
+                payBtn.disabled = false;
+                payBtn.textContent = 'Pay ₹10';
+            }
+        }
+        
+        // Show status message
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+        
+        // Handle form submission
+        document.getElementById('paymentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            // If order is not ready, treat this click as a retry for creating the order
+            if (!currentOrderId || document.getElementById('orderId').textContent === 'Error') {
+                createOrder();
+                return;
+            }
+            openRazorpayCheckout();
+        });
+        
+        // Initialize on page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', createOrder);
+        } else {
+            createOrder();
+        }
+    </script>
+</body>
+</html>
